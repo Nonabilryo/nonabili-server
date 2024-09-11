@@ -11,6 +11,7 @@ import nonabili.nonabiliserver.article.entity.RentalType
 import nonabili.nonabiliserver.common.repository.ArticleRepository
 import nonabili.nonabiliserver.article.repository.CategoryRepository
 import nonabili.nonabiliserver.article.repository.LikeRepository
+import nonabili.nonabiliserver.common.repository.UserRepository
 import nonabili.nonabiliserver.common.util.error.CustomError
 import nonabili.nonabiliserver.common.util.error.ErrorState
 import nonabili.nonabiliserver.common.service.S3UploadService
@@ -18,11 +19,19 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
+import org.springframework.web.multipart.MultipartFile
+import java.security.Principal
 import java.util.Calendar
 import java.util.UUID
 
 @Service
-class ArticleService(val articleRepository: ArticleRepository, val categoryRepository: CategoryRepository, val s3UploadService: S3UploadService, val likeRepository: LikeRepository) {
+class ArticleService(
+        val articleRepository: ArticleRepository,
+        val categoryRepository: CategoryRepository,
+        val s3UploadService: S3UploadService,
+        val likeRepository: LikeRepository,
+        val userRepository: UserRepository
+) {
     fun getSuggestArticle(page: Int): Page<ArticleSuggestResponse> {
         val cal = Calendar.getInstance()
 
@@ -45,6 +54,7 @@ class ArticleService(val articleRepository: ArticleRepository, val categoryRepos
     }
     fun postArticle(request: ArticlePostRequest, userIdx: String) {  // todo validation
 //        val userIdx = userClient.getUserIdxById(userId).idx
+        val user = userRepository.findUserByIdx(UUID.fromString(userIdx)) ?: throw CustomError(ErrorState.NOT_FOUND_USER)
         val category = request.category?.let {
             categoryRepository.findCategoryByName(request.category) ?: categoryRepository.save(
                 Category(
@@ -55,7 +65,7 @@ class ArticleService(val articleRepository: ArticleRepository, val categoryRepos
         articleRepository.save(
             Article(
                 title = request.title,
-                writer = UUID.fromString(userIdx),
+                writer = user,
                 category = category,
                 description = request.description,
                 price = request.price,
@@ -80,8 +90,9 @@ class ArticleService(val articleRepository: ArticleRepository, val categoryRepos
         )
     }
     fun deleteArticle(articleIdx: String, userIdx: String) {
+        val user = userRepository.findUserByIdx(UUID.fromString(userIdx)) ?: throw CustomError(ErrorState.NOT_FOUND_USER)
         val article = articleRepository.findArticleByIdx(UUID.fromString(articleIdx)) ?: throw CustomError(ErrorState.NOT_FOUND_ARTICLE)
-        if (article.writer != UUID.fromString(userIdx)) throw CustomError(ErrorState.DIFFERENT_USER)
+        if (!article.writer.equals(user)) throw CustomError(ErrorState.DIFFERENT_USER)
         articleRepository.delete(article)
     }
 

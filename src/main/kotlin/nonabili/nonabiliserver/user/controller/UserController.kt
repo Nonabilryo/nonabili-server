@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
 import java.security.Principal
 
 @RestController
@@ -34,23 +35,23 @@ class UserController(val userService: UserService) {
     }
 
 
-    @GetMapping("/NameToIdx/{userName}")  /// todo 중요 gateway에서 접근 제한
-    fun getUserIdxByName(@PathVariable userName: String): ResponseEntity<UserIdxResponse> {
-        val result = userService.getUserIdxByName(userName)
-        return ResponseEntity.ok(result)
-    }
-
-    @GetMapping("/IdToIdx/{userId}")  /// todo 중요 gateway에서 접근 제한
-    fun getUserIdxById(@PathVariable userId: String): ResponseEntity<UserIdxResponse> {
-        val result = userService.getUserIdxById(userId)
-        return ResponseEntity.ok(result)
-    }
-
-    @GetMapping("/IdxToUserInfo/{userIdx}")  /// todo 중요 gateway에서 접근 제한 시발 2
-    fun getUserInfoByIdx2(@PathVariable userIdx: String): ResponseEntity<UserNameAndImageResponse> {
-        val result = userService.getUserInfoByIdx(userIdx)
-        return ResponseEntity.ok(result)
-    }
+//    @GetMapping("/NameToIdx/{userName}")  ///
+//    fun getUserIdxByName(@PathVariable userName: String): ResponseEntity<UserIdxResponse> {
+//        val result = userService.getUserIdxByName(userName)
+//        return ResponseEntity.ok(result)
+//    }
+//
+//    @GetMapping("/IdToIdx/{userId}")  ///
+//    fun getUserIdxById(@PathVariable userId: String): ResponseEntity<UserIdxResponse> {
+//        val result = userService.getUserIdxById(userId)
+//        return ResponseEntity.ok(result)
+//    }
+//
+//    @GetMapping("/IdxToUserInfo/{userIdx}")  ///
+//    fun getUserInfoByIdx2(@PathVariable userIdx: String): ResponseEntity<UserNameAndImageResponse> {
+//        val result = userService.getUserInfoByIdx(userIdx)
+//        return ResponseEntity.ok(result)
+//    }
 
     @PatchMapping("/password")
     fun patchUserPassword(principal: Principal, @RequestBody @Valid request: PatchUserPasswordRequest): ResponseEntity<ResponseFormat<Any>> {
@@ -67,9 +68,9 @@ class UserController(val userService: UserService) {
     }
 
     @PutMapping("/image")
-    fun putUserImage(principal: Principal, request: PutUserImageRequest): ResponseEntity<ResponseFormat<Any>>  {
+    fun putUserImage(principal: Principal, image: MultipartFile): ResponseEntity<ResponseFormat<Any>>  {
         val userIdx = principal.name
-        userService.putUserImage(userIdx, request)
+        userService.putUserImage(userIdx, image)
         return ResponseEntity.ok(ResponseFormatBuilder { message = "success" }.noData())
     }
 

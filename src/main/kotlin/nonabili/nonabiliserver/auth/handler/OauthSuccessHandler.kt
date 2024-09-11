@@ -4,8 +4,8 @@ import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import nonabili.nonabiliserver.auth.entity.RefreshToken
-import nonabili.nonabiliserver.common.entity.Role
-import nonabili.nonabiliserver.common.entity.User
+import nonabili.nonabiliserver.auth.entity.Role
+import nonabili.nonabiliserver.user.entity.User
 import nonabili.nonabiliserver.auth.repository.RefreshTokenRepository
 import nonabili.nonabiliserver.common.repository.UserRepository
 import nonabili.nonabiliserver.common.util.jwt.JwtProvider

@@ -4,6 +4,7 @@ import com.siot.IamportRestClient.IamportClient
 import com.siot.IamportRestClient.request.CancelData
 import com.siot.IamportRestClient.request.PrepareData
 import nonabili.nonabiliserver.common.repository.ArticleRepository
+import nonabili.nonabiliserver.common.repository.UserRepository
 import nonabili.nonabiliserver.dto.request.AcceptPostRequest
 import nonabili.nonabiliserver.dto.request.OrderPostRequest
 import nonabili.nonabiliserver.dto.request.PayPostRequest
@@ -13,6 +14,7 @@ import nonabili.nonabiliserver.entity.RentalType
 import nonabili.nonabiliserver.repository.OrderRepository
 import nonabili.nonabiliserver.common.util.error.CustomError
 import nonabili.nonabiliserver.common.util.error.ErrorState
+import nonabili.nonabiliserver.order.dto.response.OrderResponse
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
@@ -25,12 +27,15 @@ class OrderService(val orderRepository: OrderRepository,
     @Value("\${portOne.apiKey}") val apiKey: String,
     @Value("\${portOne.secretKey}") val secretKey: String,
     @Value("\${portOne.impCode}") val impCode: String,
-        val articleRepository: ArticleRepository
+        val articleRepository: ArticleRepository,
+        val userRepository: UserRepository
 ) {
-    fun postOrder(userIdx: String, request: OrderPostRequest) { //todo article check
+    fun postOrder(userIdx: String, request: OrderPostRequest, articleIdx: String) { //todo article check
+        val user = userRepository.findUserByIdx(UUID.fromString(userIdx)) ?: throw CustomError(ErrorState.NOT_FOUND_USER)
+        val article = articleRepository.findArticleByIdx(UUID.fromString(articleIdx)) ?: throw CustomError(ErrorState.NOT_FOUND_ARTICLE)
         val order = Order(
-            article = UUID.fromString(request.article),
-            user = UUID.fromString(userIdx),
+            article = article,
+            user = user,
             comment = request.comment,
             rentalType = RentalType.fromInt(request.rentalType)!!,
             period = request.period
@@ -40,8 +45,9 @@ class OrderService(val orderRepository: OrderRepository,
         IamportClient(apiKey, secretKey).postPrepare(prepareData)
     }
     fun postPayOrder(userIdx: String, request: PayPostRequest) {
+        val user = userRepository.findUserByIdx(UUID.fromString(userIdx)) ?: throw CustomError(ErrorState.NOT_FOUND_USER)
         val order = orderRepository.findOrderByIdx(UUID.fromString(request.order)) ?: throw CustomError(ErrorState.NOT_FOUND_ORDER)
-        if (order.user.toString() != userIdx) throw CustomError(ErrorState.DIFFERENT_USER)
+        if (!order.user.equals(user)) throw CustomError(ErrorState.DIFFERENT_USER)
         val payment = IamportClient(apiKey, secretKey).paymentByImpUid(order.idx.toString())
         try {
             if (payment.code != 0) throw Error()
@@ -57,14 +63,27 @@ class OrderService(val orderRepository: OrderRepository,
 
         orderRepository.save(order.copy(state = OrderState.PAID))
     }
-    fun getOrders(userIdx: String, articleIdx: String, page: Int): Page<Order> {
+    fun getOrders(userIdx: String, articleIdx: String, page: Int): Page<OrderResponse> {
+        val user = userRepository.findUserByIdx(UUID.fromString(userIdx)) ?: throw CustomError(ErrorState.NOT_FOUND_USER)
         val article = articleRepository.findArticleByIdx(UUID.fromString(articleIdx)) ?: throw CustomError(ErrorState.NOT_FOUND_ARTICLE)
-        if (article.writer.toString() != userIdx) throw CustomError(ErrorState.SERVER_UNAVAILABLE)
-        return orderRepository.findOrdersByArticle(UUID.fromString(articleIdx), PageRequest.of(page, 25))
+        if (!article.writer.equals(user)) throw CustomError(ErrorState.SERVER_UNAVAILABLE)
+        return orderRepository.findOrdersByArticle(UUID.fromString(articleIdx), PageRequest.of(page, 25)).map { OrderResponse(
+                idx = it.idx,
+                userIdx = it.user.idx,
+                articleIdx = it.article.idx,
+                state = it.state.toString(),
+                comment = it.comment,
+                rentalType = it.rentalType.toString(),
+                period = it.period,
+                paidAt = it.paidAt,
+                closedAt = it.closedAt,
+                createdAt = it.createdAt
+        ) }
     }
     fun deleteOrder(userIdx: String, orderIdx: String) {
+        val user = userRepository.findUserByIdx(UUID.fromString(userIdx)) ?: throw CustomError(ErrorState.NOT_FOUND_USER)
         val order = orderRepository.findOrderByIdx(UUID.fromString(orderIdx)) ?: throw CustomError(ErrorState.NOT_FOUND_ORDER)
-        if (order.user.toString() != userIdx) throw CustomError(ErrorState.DIFFERENT_USER)
+        if (!order.user.equals(user)) throw CustomError(ErrorState.DIFFERENT_USER)
         try {
             val payment = IamportClient(apiKey, secretKey).paymentByImpUid(order.idx.toString())
             paymentCancel(payment.response.impUid)
@@ -72,9 +91,9 @@ class OrderService(val orderRepository: OrderRepository,
         orderRepository.save(order.copy(state = OrderState.CANCEL))
     }
     fun postAcceptOrder(userIdx: String, request: AcceptPostRequest) {
+        val user = userRepository.findUserByIdx(UUID.fromString(userIdx)) ?: throw CustomError(ErrorState.NOT_FOUND_USER)
         val order = orderRepository.findOrderByIdx(UUID.fromString(request.order)) ?: throw CustomError(ErrorState.NOT_FOUND_ORDER)
-        val article = articleRepository.findArticleByIdx(order.article) ?: throw CustomError(ErrorState.NOT_FOUND_ARTICLE)
-        if (article.writer.toString() != userIdx) throw CustomError(ErrorState.SERVER_UNAVAILABLE)
+        if (order.article.writer.equals(user)) throw CustomError(ErrorState.SERVER_UNAVAILABLE)
         val calendar = Calendar.getInstance()
         when (order.rentalType.value) {
             0 -> calendar.add(Calendar.YEAR, order.period as Int)

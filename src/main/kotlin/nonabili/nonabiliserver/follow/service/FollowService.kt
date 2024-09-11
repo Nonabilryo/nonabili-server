@@ -19,54 +19,54 @@ import kotlin.math.log
 class FollowService(val followRepository: FollowRepository, val userRepository: UserRepository) {
     val log = LoggerFactory.getLogger(javaClass)
     fun postFollowUser(userIdx: String, followingIdx: String) {
-//        val followingIdx = userClient.getUserIdxByName(userName).idx ?: throw CustomError(ErrorState.NOT_FOUND_USERNAME)
-
-        followRepository.findFollowByFollowerAndFollowing(UUID.fromString(userIdx), UUID.fromString(followingIdx))
+        val follower = userRepository.findUserByIdx(UUID.fromString(userIdx)) ?: throw CustomError(ErrorState.NOT_FOUND_USER)
+        val following = userRepository.findUserByIdx(UUID.fromString(followingIdx)) ?: throw CustomError(ErrorState.NOT_FOUND_USER)
+        followRepository.findFollowByFollowerAndFollowing(follower, following)
             ?.let { throw CustomError(ErrorState.AREADY_FOLLOWED) }
 
         followRepository.save(Follow(
-            follower = UUID.fromString(userIdx),
-            following = UUID.fromString(followingIdx)
+            follower = follower,
+            following = following
         ))
     }
     fun deleteFollowUser(userIdx: String, followingIdx: String) {
-//        val followerIdx = userClient.getUserIdxById(userId).idx ?: throw CustomError(ErrorState.NOT_FOUND_ID)
-//        val followingIdx = userClient.getUserIdxByName(userName).idx ?: throw CustomError(ErrorState.NOT_FOUND_USERNAME)
-
-        val follow = followRepository.findFollowByFollowerAndFollowing(UUID.fromString(userIdx), UUID.fromString(followingIdx))
+        val follower = userRepository.findUserByIdx(UUID.fromString(userIdx)) ?: throw CustomError(ErrorState.NOT_FOUND_USER)
+        val following = userRepository.findUserByIdx(UUID.fromString(followingIdx)) ?: throw CustomError(ErrorState.NOT_FOUND_USER)
+        val follow = followRepository.findFollowByFollowerAndFollowing(follower, following)
             ?: throw CustomError(ErrorState.NOT_FOUND_FOLLOW)
         followRepository.delete(follow)
     }
 
     fun getFollowInfo(userIdx: String): FollowInfoResponse {
-//        val userIdx = userClient.getUserIdxByName(userName).idx ?: throw CustomError(ErrorState.NOT_FOUND_USERNAME)
+        val user = userRepository.findUserByIdx(UUID.fromString(userIdx)) ?: throw CustomError(ErrorState.NOT_FOUND_USER)
+        val followCount = followRepository.findFollowerAndFollowingCounts(user)
         return FollowInfoResponse(
-            follower = followRepository.countFollowByFollowing(UUID.fromString(userIdx)),
-            following = followRepository.countFollowByFollower(UUID.fromString(userIdx))
+            follower = followCount.follower,
+            following = followCount.following
         )
     }
 
     fun getFollowingUserInfo(userIdx: String, page: Int): Page<UserInfoResponse> {
-//        val userIdx = userClient.getUserIdxByName(userName).idx ?: throw CustomError(ErrorState.NOT_FOUND_USERNAME)
-        val follows = followRepository.findFollowsByFollowerOrderByDateDesc(UUID.fromString(userIdx), PageRequest.of(page, 100))
+        val user = userRepository.findUserByIdx(UUID.fromString(userIdx)) ?: throw CustomError(ErrorState.NOT_FOUND_USER)
+        val follows = followRepository.findFollowsByFollowerOrderByDateDesc(user, PageRequest.of(page, 100))
 
         log.info("total elements: " + follows.totalElements.toString())
         log.info("total pages: " + follows.totalPages.toString())
         val userInfos = PageImpl(follows.content.map {
-            val user = userRepository.findUserByIdx(it.following) ?: throw CustomError(ErrorState.NOT_FOUND_USER)
+            val user = it.following
             UserInfoResponse(userName = user.name, image = user.image?.url)
                                                      }, follows.pageable, follows.totalElements)
         return userInfos
     }
 
     fun getFollowerUserInfo(userIdx: String, page: Int): Page<UserInfoResponse> {
-//        val userIdx = userClient.getUserIdxByName(userName).idx ?: throw CustomError(ErrorState.NOT_FOUND_USERNAME)
-        val follows = followRepository.findFollowsByFollowingOrderByDateDesc(UUID.fromString(userIdx), PageRequest.of(page, 100))
+        val user = userRepository.findUserByIdx(UUID.fromString(userIdx)) ?: throw CustomError(ErrorState.NOT_FOUND_USER)
+        val follows = followRepository.findFollowsByFollowingOrderByDateDesc(user, PageRequest.of(page, 100))
 
         log.info("total elements: " + follows.totalElements.toString())
         log.info("total pages: " + follows.totalPages.toString())
         val userInfos = PageImpl(follows.content.map {
-            val user = userRepository.findUserByIdx(it.following) ?: throw CustomError(ErrorState.NOT_FOUND_USER)
+            val user = it.following
             UserInfoResponse(userName = user.name, image = user.image?.url)
         }, follows.pageable, follows.totalElements)
         return userInfos

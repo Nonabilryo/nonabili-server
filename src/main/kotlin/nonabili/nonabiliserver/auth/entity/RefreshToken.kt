@@ -1,7 +1,7 @@
 package nonabili.nonabiliserver.auth.entity
 
 import jakarta.persistence.*
-import nonabili.nonabiliserver.common.entity.User
+import nonabili.nonabiliserver.user.entity.User
 
 @Entity
 data class RefreshToken(

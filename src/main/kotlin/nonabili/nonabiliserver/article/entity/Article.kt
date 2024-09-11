@@ -2,6 +2,7 @@ package nonabili.nonabiliserver.article.entity
 
 import jakarta.persistence.*
 import nonabili.nonabiliserver.common.entity.Image
+import nonabili.nonabiliserver.user.entity.User
 import java.util.Date
 import java.util.UUID
 
@@ -11,11 +12,13 @@ data class Article( //todo / put column
     @GeneratedValue(strategy = GenerationType.UUID)
     val idx: UUID = UUID.randomUUID(),
         val title: String,
-        val writer: UUID,
-        val buyer: UUID? = null,
+        @ManyToOne
+        val writer: User,
+        @ManyToOne
+        val buyer: User? = null,
         @ManyToOne(fetch = FetchType.LAZY)  // todo 시발
-    @JoinColumn(name = "category_idx")
-    val category: Category? = null,
+        @JoinColumn(name = "category_idx")
+        val category: Category? = null,
         val description: String,
         val price: Long,
         val rentalType: RentalType = RentalType.MONTH,

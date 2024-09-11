@@ -1,8 +1,8 @@
-package nonabili.nonabiliserver.common.entity
+package nonabili.nonabiliserver.user.entity
 
 import jakarta.persistence.*
 import nonabili.nonabiliserver.common.entity.Image
-import nonabili.nonabiliserver.common.entity.Role
+import nonabili.nonabiliserver.auth.entity.Role
 import java.util.Date
 import java.util.UUID
 

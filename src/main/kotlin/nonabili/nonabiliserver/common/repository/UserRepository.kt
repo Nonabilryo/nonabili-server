@@ -1,6 +1,6 @@
 package nonabili.nonabiliserver.common.repository
 
-import nonabili.nonabiliserver.common.entity.User
+import nonabili.nonabiliserver.user.entity.User
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 import java.util.UUID

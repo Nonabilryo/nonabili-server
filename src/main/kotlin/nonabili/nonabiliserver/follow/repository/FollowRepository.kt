@@ -1,19 +1,28 @@
 package nonabili.nonabiliserver.follow.repository
 
+import nonabili.nonabiliserver.user.entity.User
 import nonabili.nonabiliserver.follow.entity.Follow
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
-import java.util.UUID
+import java.util.*
 
 @Repository
 interface FollowRepository: JpaRepository<Follow, UUID> {
-    fun findFollowByFollowerAndFollowing(follower: UUID, following: UUID): Follow?
-    fun findFollowsByFollower(follower: UUID): List<Follow>
-    fun findFollowsByFollowingOrderByDateDesc(following: UUID, pageable: Pageable): Page<Follow>
-    fun findFollowsByFollowerOrderByDateDesc(follower: UUID, pageable: Pageable): Page<Follow>
+    fun findFollowByFollowerAndFollowing(follower: User, following: User): Follow?
+    fun findFollowsByFollower(follower: User): List<Follow>
+    fun findFollowsByFollowingOrderByDateDesc(following: User, pageable: Pageable): Page<Follow>
+    fun findFollowsByFollowerOrderByDateDesc(follower: User, pageable: Pageable): Page<Follow>
 
-    fun countFollowByFollowing(following: UUID): Long
-    fun countFollowByFollower(follower: UUID): Long
+//    fun countFollowByFollowing(following: User): Long
+//    fun countFollowByFollower(follower: User): Long
+    @Query("SELECT " +
+            "(SELECT COUNT(f) FROM Follow f WHERE f.follower = :user) AS followerCount, " +
+            "(SELECT COUNT(f) FROM Follow f WHERE f.following = :user) AS followingCount " +
+            "FROM Follow f " +
+            "WHERE f.follower = :user OR f.following = :user")
+    fun findFollowerAndFollowingCounts(user: User): FollowCount
+
 }

@@ -13,6 +13,7 @@ import nonabili.nonabiliserver.common.util.error.CustomError
 import nonabili.nonabiliserver.common.util.error.ErrorState
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Service
+import org.springframework.web.multipart.MultipartFile
 import java.util.UUID
 
 @Service
@@ -70,10 +71,10 @@ class UserService(val userRepository: UserRepository, val passwordEncoder: BCryp
         )
     }
 
-    fun putUserImage(userIdx: String, request: PutUserImageRequest) {
+    fun putUserImage(userIdx: String, image: MultipartFile) {
         val user = userRepository.findUserByIdx(UUID.fromString(userIdx)) ?: throw CustomError(ErrorState.NOT_FOUND_ID)
         userRepository.save(user.copy(
-            image = s3UploadService.saveImage(request.image, "profile_image")
+            image = s3UploadService.saveImage(image, "profile_image")
         ))
     }
 

@@ -1,6 +1,8 @@
 package nonabili.nonabiliserver.entity
 
 import jakarta.persistence.*
+import nonabili.nonabiliserver.article.entity.Article
+import nonabili.nonabiliserver.user.entity.User
 import java.util.*
 
 @Entity
@@ -9,8 +11,10 @@ data class Order(
         @Id
         @GeneratedValue(strategy = GenerationType.UUID)
         val idx: UUID = UUID.randomUUID(),
-        val user: UUID,
-        val article: UUID,
+        @ManyToOne
+        val user: User,
+        @ManyToOne
+        val article: Article,
         val state: OrderState = OrderState.READY,
         val comment: String,
         val rentalType: RentalType,

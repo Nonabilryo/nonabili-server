@@ -4,8 +4,8 @@ import jakarta.servlet.http.HttpSession
 import nonabili.nonabiliserver.auth.dto.request.*
 import nonabili.nonabiliserver.auth.dto.response.TokenResponse
 import nonabili.nonabiliserver.auth.entity.RefreshToken
-import nonabili.nonabiliserver.common.entity.Role
-import nonabili.nonabiliserver.common.entity.User
+import nonabili.nonabiliserver.auth.entity.Role
+import nonabili.nonabiliserver.user.entity.User
 import nonabili.nonabiliserver.auth.repository.RefreshTokenRepository
 import nonabili.nonabiliserver.common.repository.UserRepository
 import nonabili.nonabiliserver.common.util.error.CustomError
