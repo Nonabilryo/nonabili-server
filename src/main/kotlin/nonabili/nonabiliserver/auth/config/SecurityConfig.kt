@@ -31,6 +31,7 @@ class SecurityConfig(val customOauth2UserService: CustomOauth2UserService, val o
                 it
                         .requestMatchers("/sso/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/article/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/follow/**").permitAll()
                         .requestMatchers("/swagger-ui.html", "/api-docs/**", "/swagger-ui/**", "/v1/**", "/v2/**", "/v3/**").permitAll()
                         .anyRequest().authenticated()
             }

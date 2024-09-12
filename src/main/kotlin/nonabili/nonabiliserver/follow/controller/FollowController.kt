@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import java.security.Principal
 
 @RestController
 @RequestMapping("/follow")
@@ -30,6 +31,11 @@ class FollowController(val followService: FollowService) { // todo 헤더 필요
         val userIdx = requestHeader.get("userIdx")!![0]
         followService.deleteFollowUser(userIdx, followingIdx)
         return ResponseEntity.ok(ResponseFormatBuilder { message = "success" }.noData())
+    }
+    @GetMapping()
+    fun getMyFollowInfo(principal: Principal): ResponseEntity<ResponseFormat<FollowInfoResponse>> {
+        val result = followService.getFollowInfo(principal.name)
+        return ResponseEntity.ok(ResponseFormatBuilder { message = "success"}.build(result))
     }
 
     @GetMapping("/{userIdx}")

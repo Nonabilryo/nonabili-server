@@ -49,13 +49,15 @@ class SSOService(
             }
         } else {
             if (session.getAttribute("email") != request.email
-                || session.getAttribute("emailVerifyCode") != request.emailVerifyCode
+                || session.getAttribute("emailVerifed") == false
+//                || session.getAttribute("emailVerifyCode") != request.emailVerifyCode
                 || (session.getAttribute("emailVerifyCodeExp") as LocalDateTime?)?.isBefore(LocalDateTime.now()) == true
             ) {
                 throw CustomError(ErrorState.NOT_VERIFED_EMAIL)
             }
             if (session.getAttribute("tell") != request.tell
-                || session.getAttribute("tellVerifyCode") != request.tellVerifyCode
+                || session.getAttribute("tellVerifed") == false
+//                || session.getAttribute("tellVerifyCode") != request.tellVerifyCode
                 || (session.getAttribute("tellVerifyCodeExp") as LocalDateTime?)?.isBefore(LocalDateTime.now()) == true
             ) {
                 throw CustomError(ErrorState.NOT_VERIFED_TELL)
@@ -119,6 +121,7 @@ class SSOService(
         session.setAttribute("tell", request.tell)
         session.setAttribute("tellVerifyCode", randomCode)
         session.setAttribute("tellVerifyCodeExp", LocalDateTime.now().plus(3, ChronoUnit.MINUTES))
+        session.setAttribute("tellVerifed", false)
         return randomCode
     }
 
@@ -129,7 +132,22 @@ class SSOService(
         session.setAttribute("email", request.email)
         session.setAttribute("emailVerifyCode", randomCode)
         session.setAttribute("emailVerifyCodeExp", LocalDateTime.now().plus(3, ChronoUnit.MINUTES))
+        session.setAttribute("emailVerifed", false)
         return randomCode
     }
 
+    fun verifyEmailCode(request: VerifyEmailCodeRequest, session: HttpSession) {
+        if (session.getAttribute("emailVerifyCode") != request.emailVerifyCode
+                || (session.getAttribute("emailVerifyCodeExp") as LocalDateTime?)?.isBefore(LocalDateTime.now()) == true
+        ) throw CustomError(ErrorState.WRONG_EMAILVERIFYCODE)
+        session.setAttribute("emailVerifyCodeExp", LocalDateTime.now().plus(10, ChronoUnit.MINUTES))
+        session.setAttribute("emailVerifed", true)
+    }
+    fun verifyTellCode(request: VerifyTellCodeRequest, session: HttpSession) {
+        if (session.getAttribute("tellVerifyCode") != request.tellVerifyCode
+                || (session.getAttribute("tellVerifyCodeExp") as LocalDateTime?)?.isBefore(LocalDateTime.now()) == true
+        ) throw CustomError(ErrorState.WRONG_EMAILVERIFYCODE)
+        session.setAttribute("tellVerifyCodeExp", LocalDateTime.now().plus(10, ChronoUnit.MINUTES))
+        session.setAttribute("tellVerifed", true)
+    }
 }

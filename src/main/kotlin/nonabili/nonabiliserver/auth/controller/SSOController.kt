@@ -61,4 +61,15 @@ class SSOController(val ssoService: SSOService) {
         ssoService.verifyEmail(request, httpServletRequest.getSession(true))
         return ResponseEntity.ok(ResponseFormatBuilder { message = "success" }.noData())
     }
+
+    @PostMapping("/verify/emailCode")
+    fun verifyEmailCode(@RequestBody @Valid reqeust: VerifyEmailCodeRequest, httpServletRequest: HttpServletRequest): ResponseEntity<ResponseFormat<Any>> {
+        ssoService.verifyEmailCode(reqeust, httpServletRequest.getSession(true))
+        return ResponseEntity.ok(ResponseFormatBuilder { message = "success" }.noData())
+    }
+    @PostMapping("/verify/tellCode")
+    fun verifyTellCode(@RequestBody @Valid reqeust: VerifyTellCodeRequest, httpServletRequest: HttpServletRequest): ResponseEntity<ResponseFormat<Any>> {
+        ssoService.verifyTellCode(reqeust, httpServletRequest.getSession(true))
+        return ResponseEntity.ok(ResponseFormatBuilder { message = "success" }.noData())
+    }
 }
