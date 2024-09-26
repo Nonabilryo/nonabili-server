@@ -1,5 +1,9 @@
 package nonabili.nonabiliserver.config
 
+import nonabili.nonabiliserver.common.util.error.CustomError
+import nonabili.nonabiliserver.common.util.error.ErrorState
+import nonabili.nonabiliserver.common.util.jwt.JwtProvider
+import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Configuration
 import org.springframework.messaging.Message
 import org.springframework.messaging.MessageChannel
@@ -11,14 +15,16 @@ import org.springframework.messaging.support.MessageHeaderAccessor
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer
+import java.security.Principal
 
 @Configuration
 @EnableWebSocketMessageBroker
-class WebSocketConfig : WebSocketMessageBrokerConfigurer {
+class WebSocketConfig(val tokenProvider: JwtProvider) : WebSocketMessageBrokerConfigurer {
+    val log = LoggerFactory.getLogger(javaClass)
 
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {
         registry.addEndpoint("/chat/ws")
-            .setAllowedOrigins("http://localhost:3020")
+            .setAllowedOriginPatterns("*")
             .withSockJS()
     }
 
@@ -32,12 +38,20 @@ class WebSocketConfig : WebSocketMessageBrokerConfigurer {
             override fun preSend(message: Message<*>, channel: MessageChannel): Message<*>? {
                 val accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor::class.java)
                 if (StompCommand.SUBSCRIBE == accessor?.command) {
-                    val idxHeader = accessor.getFirstNativeHeader("userIdx")
+                    val token = accessor.getFirstNativeHeader("Authorization") ?: throw CustomError(ErrorState.NOT_FOUND_USER)
+                    val userIdx = tokenProvider.getUserIdxByToken(token)
+                    log.info(token)
+                    log.info(userIdx)
                     val destination = accessor.destination
-                    if (destination != null && idxHeader != null) {
-                        if (!destination.endsWith("/$idxHeader")) {
-                            throw IllegalArgumentException("topic != userIdx")
+                    log.info(destination)
+                    if (destination != null && userIdx != null) {
+                        if (!destination.endsWith("/$userIdx")) {
+                            throw CustomError(ErrorState.DIFFERENT_USER)
+                            return null;
                         }
+                    } else {
+                        throw CustomError(ErrorState.WRONG_DESTINATION)
+                        return null;
                     }
                 }
                 return message

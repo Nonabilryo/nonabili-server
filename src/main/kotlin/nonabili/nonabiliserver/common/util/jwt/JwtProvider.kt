@@ -15,6 +15,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.User
 import org.springframework.stereotype.Component
 import java.security.Key
+import java.security.Principal
 import java.util.*
 import kotlin.io.encoding.Base64
 
@@ -73,6 +74,14 @@ class JwtProvider(
         return UsernamePasswordAuthenticationToken(principal, token, role)
     }
 
+    fun getUserIdxByToken(token: String): String {
+        val claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .body
+        return claims.subject
+    }
     fun validateToken(token: String): Jws<Claims> {
         return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token)
     }

@@ -36,6 +36,7 @@ enum class ErrorState(val status: HttpStatus = HttpStatus.OK, val message: Strin
 
     WRONG_PASSWORD(HttpStatus.BAD_REQUEST, "Wrong password"),
     WRONG_EMAILVERIFYCODE(HttpStatus.BAD_REQUEST, "Wrong emailVerifyCode"),
+    WRONG_DESTINATION(HttpStatus.BAD_REQUEST, "Wrong destination"),
 
     NOT_VERIFED_EMAIL(HttpStatus.BAD_REQUEST, "Email not verifed"),
     NOT_VERIFED_TELL(HttpStatus.BAD_REQUEST, "Tell not verifed"),
